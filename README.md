@@ -1,6 +1,6 @@
-## Разработка дополнительного функционала для магазина Vape PARADISE 
+## Разработка дополнительного функционала для магазина Vape Paradise
 
-Этот репозиторий содержит инструменты и скрипты, разработанные для автоматизации операционных процессов интернет-магазина PARADISE ([https://paradise-shop19.ru](https://paradise-shop19.ru)).
+Этот репозиторий содержит инструменты и скрипты, разработанные для автоматизации операционных процессов интернет-магазина Vape Paradise ([https://paradise-shop19.ru](https://paradise-shop19.ru)).
 
 <a href="https://paradise-shop19.ru"><img src="vapeParadise.webp" alt="Vape Paradise"></a>
 
