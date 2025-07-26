@@ -1,4 +1,5 @@
 <?php
+
 class CreateMessageRequest extends BaseRequest
 {
     use CancelHandler, StartAndEndProcess;
@@ -44,7 +45,7 @@ class CreateMessageRequest extends BaseRequest
         }
     
         if ($messageText === 'Разослать' && ($textForMailing || $photoId)) {
-            $usersForMailing = User::where('role', 0)->get();
+            $usersForMailing = User::where('role', 0)->get(['id', 'username']);
     
             if ($usersForMailing->isEmpty()) {
                 $this->endProcess();
@@ -57,7 +58,14 @@ class CreateMessageRequest extends BaseRequest
     
             $totalUsers = $usersForMailing->count();
             $successCount = 0;
-            $errorMessages = [];
+            $failedCount = 0;
+            $reportContent = "Отчет о рассылке\n\n";
+            $reportContent .= $photoId 
+                ? "Тип: Изображение с подписью\nПодпись: $captionForMailing\n\n" 
+                : "Тип: Текст\nТекст: $textForMailing\n\n";
+            
+            $successUsers = [];
+            $failedUsers = [];
     
             foreach ($usersForMailing as $user) {
                 try {
@@ -74,30 +82,61 @@ class CreateMessageRequest extends BaseRequest
                         ]);
                     }
                     $successCount++;
+                    
+                    if ($user->username) {
+                        $userLink = "https://t.me/{$user->username}";
+                    } else {
+                        $userLink = "tg://user?id={$user->id} (только в Telegram)";
+                    }
+                    $successUsers[] = $userLink;
                 } catch (\Exception $e) {
-                    $errorMessages[] = "Пользователь ID {$user->id}: " . $e->getMessage();
+                    $failedCount++;
+                    
+                    if ($user->username) {
+                        $userLink = "https://t.me/{$user->username}";
+                    } else {
+                        $userLink = "tg://user?id={$user->id} (только в Telegram)";
+                    }
+                    $failedUsers[] = "$userLink - " . $e->getMessage();
                 }
             }
     
-            $responseText = "Рассылка завершена.\nУспешно отправлено: {$successCount}/{$totalUsers}\n";
-    
-            if (!empty($errorMessages)) {
-                $errorText = implode("\n", array_slice($errorMessages, 0, 5));
-                if (count($errorMessages) > 5) {
-                    $errorText .= "\n... и ещё " . (count($errorMessages) - 5) . " ошибок.";
-                }
-                $responseText .= "\nОшибки:\n" . $errorText;
-            } else {
-                $responseText .= "Все сообщения успешно доставлены.";
+            $reportContent .= "Статистика:\n";
+            $reportContent .= "Успешно отправлено: {$successCount}/{$totalUsers}\n";
+            $reportContent .= "Не удалось отправить: {$failedCount}/{$totalUsers}\n\n";
+            
+            if (!empty($successUsers)) {
+                $reportContent .= "Успешные отправки:\n" . implode("\n", $successUsers) . "\n\n";
             }
+            
+            if (!empty($failedUsers)) {
+                $reportContent .= "Неудачные отправки:\n" . implode("\n", array_slice($failedUsers, 0, 50));
+                if (count($failedUsers) > 50) {
+                    $reportContent .= "\n... и ещё " . (count($failedUsers) - 50) . " ошибок.";
+                }
+            }
+    
+            $fileName = "mailing_report_" . time() . ".txt";
+            $filePath = storage_path('app/tmp/' . $fileName);
+            
+            if (!file_exists(storage_path('app/tmp'))) {
+                mkdir(storage_path('app/tmp'), 0755, true);
+            }
+            
+            file_put_contents($filePath, $reportContent);
+    
+            $this->sendDocument([
+                'chat_id' => $chatId,
+                'document' => $filePath,
+                'caption' => "Отчет о рассылке. Успешно: {$successCount}, Ошибок: {$failedCount}"
+            ]);
+    
+            unlink($filePath);
     
             $this->endProcess();
             $this->storage->delete("mailing_$chatId");
     
-            return $this->sendMessage([
-                'text' => $responseText,
-                'reply_markup' => ['remove_keyboard' => true]
-            ]);
+            return;
         }
     
         if ($textForMailing || $photoId) {
