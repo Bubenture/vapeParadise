@@ -1,5 +1,16 @@
 ## Разработка дополнительного функционала для магазина Vape Paradise
 
+</br>
+<div>
+    <a href="README.md">
+        <img src="https://img.shields.io/badge/README-RU-blue?color=44944a&labelColor=1C2325&style=for-the-badge">
+    </a>
+    <a href="README.en.md">
+        <img src="https://img.shields.io/badge/README-ENG-blue?color=006400&labelColor=006400&style=for-the-badge">
+    </a>
+</div>
+</br>
+
 Инструменты и скрипты, разработанные для автоматизации операционных процессов Vape Paradise - [https://paradise-shop19.ru](https://paradise-shop19.ru)
 
 <a href="https://paradise-shop19.ru"><img src="vapeParadise.webp" alt="Vape Paradise"></a>
